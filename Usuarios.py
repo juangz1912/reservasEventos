@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from PIL import ImageTk, Image
-import re
 import mysql.connector
 
 class Database:
@@ -45,6 +44,7 @@ class Usuarios:
         self.update_button = tk.Button(root, text="Actualizar", command=self.update_user)
         self.delete_button = tk.Button(root, text="Eliminar", command=self.delete_user)
         self.view_all_button = tk.Button(root, text="Ver todos", command=self.view_all_users)
+        self.back_button = tk.Button(root, text="Regresar a Reservas", command=self.go_back_to_reservations)
 
         # Cargar la imagen
         self.image = Image.open("/Users/juanjo/Desktop/udem.png")
@@ -66,10 +66,15 @@ class Usuarios:
         self.update_button.grid(row=4, column=2, padx=10, pady=5)
         self.delete_button.grid(row=4, column=3, padx=10, pady=5)
         self.view_all_button.grid(row=4, column=4, padx=10, pady=5)
+        self.back_button.grid(row=6, column=0, padx=10, pady=5)
         self.image_label.grid(row=0, column=5, rowspan=4, padx=10, pady=5, sticky=tk.NE)
 
         # Crear la conexión a la base de datos
         self.database = Database()
+
+    def go_back_to_reservations(self):
+        self.root.destroy()  # Cierra la ventana actual de Lugares
+
     def add_user(self):
         # Obtener los valores de los campos
         id_usuario = self.id_usuario_var.get()

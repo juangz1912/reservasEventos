@@ -4,6 +4,7 @@ from tkinter import ttk
 import datetime
 import mysql.connector
 from PIL import ImageTk, Image
+import Lugares
 
 class Database:
     def __init__(self):
@@ -128,6 +129,7 @@ class EventReservationApp:
         self.root = root
         self.root.title("Reserva de Eventos")
 
+
         # Variables de entrada
         self.id_var = tk.StringVar()
         self.event_name_var = tk.StringVar()
@@ -178,6 +180,15 @@ class EventReservationApp:
 
         # Conexión a la base de datos
         self.database = Database()
+
+        #ventana lugares
+
+    def open_new_window(self):
+        new_window = tk.Toplevel(Lugares)
+        new_window.title("Gestion lugares")
+        lugares_instance = Lugares.Lugares(new_window)  # Crea una instancia de la clase NewTab
+        lugares_instance.run()  # Llama al método run() para mostrar la nueva pestaña
+
 
     def add_reservation(self):
         id = self.id_var.get()

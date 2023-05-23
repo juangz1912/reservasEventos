@@ -4,6 +4,7 @@ import mysql.connector
 from tkinter import ttk
 import datetime
 
+
 class EventReservationApp:
     def __init__(self, root):
         self.root = root
@@ -18,8 +19,8 @@ class EventReservationApp:
 
         # Estilos
         self.style = ttk.Style()
-        self.style.configure("TEntry", font=("Arial", 12))
-        self.style.configure("TButton", font=("Arial", 12))
+        self.style.configure("TEntry", font=("Arial", 12), background="white", foreground="black")
+        self.style.configure("TButton", font=("Arial", 12), background="black", foreground="black")
 
         # Elementos de la interfaz
         self.id_label = ttk.Label(root, text="ID:")
@@ -35,6 +36,7 @@ class EventReservationApp:
         self.add_button = ttk.Button(root, text="Agregar", command=self.add_reservation)
         self.search_button = ttk.Button(root, text="Buscar", command=self.search_reservation)
         self.delete_button = ttk.Button(root, text="Eliminar", command=self.delete_reservation)
+        self.view_all_button = ttk.Button(root, text="Ver todas", command=self.view_all_reservations)
 
         # Posicionamiento de los elementos
         self.id_label.grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
@@ -50,6 +52,19 @@ class EventReservationApp:
         self.add_button.grid(row=5, column=0, padx=10, pady=5)
         self.search_button.grid(row=5, column=1, padx=10, pady=5)
         self.delete_button.grid(row=5, column=2, padx=10, pady=5)
+        self.view_all_button.grid(row=5, column=3, padx=10, pady=5)
+
+        # Configurar diseño responsivo
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_rowconfigure(2, weight=1)
+        self.root.grid_rowconfigure(3, weight=1)
+        self.root.grid_rowconfigure(4, weight=1)
+        self.root.grid_rowconfigure(5, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(2, weight=1)
+        self.root.grid_columnconfigure(3, weight=1)
 
         # Conexión a la base de datos
         self.connection = self.connect_to_database()
@@ -167,6 +182,26 @@ class EventReservationApp:
         self.time_var.set("")
         self.attendees_var.set("")
 
+    def view_all_reservations(self):
+        cursor = self.connection.cursor()
+
+        # Ejemplo de consulta SELECT para obtener todas las reservas
+        query = "SELECT * FROM reservas"
+        cursor.execute(query)
+        reservations = cursor.fetchall()
+
+        if reservations:
+            # Mostrar las reservas en una ventana emergente (messagebox)
+            reservation_list = ""
+            for reservation in reservations:
+                reservation_list += f"ID: {reservation[0]}, Nombre del evento: {reservation[1]}, Fecha: {reservation[2]}, Hora: {reservation[3]}, Asistentes: {reservation[4]}\n"
+
+            messagebox.showinfo("Todas las Reservas", reservation_list)
+        else:
+            messagebox.showinfo("Todas las Reservas", "No se encontraron reservas.")
+
+        cursor.close()
+
     def close_connection(self):
         # Cerrar la conexión cuando se cierre la ventana
         self.connection.close()
@@ -177,6 +212,7 @@ if __name__ == "__main__":
     app = EventReservationApp(root)
     root.protocol("WM_DELETE_WINDOW", app.close_connection)
     root.mainloop()
+
 
 
 

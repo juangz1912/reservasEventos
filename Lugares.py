@@ -41,6 +41,7 @@ class Lugares:
         self.update_button = tk.Button(root, text="Actualizar", command=self.update_place)
         self.delete_button = tk.Button(root, text="Eliminar", command=self.delete_place)
         self.view_all_button = tk.Button(root, text="Ver todos", command=self.view_all_places)
+        self.back_button = tk.Button(root, text="Regresar a Reservas", command=self.go_back_to_reservations)
 
         # Cargar la imagen
         self.image = Image.open("/Users/juanjo/Desktop/udem.png")
@@ -55,12 +56,21 @@ class Lugares:
         self.direccion_entry.grid(row=1, column=1, padx=10, pady=5)
         self.tipo_lugar_label.grid(row=4, column=0, sticky=tk.W, padx=10, pady=5)
         self.tipo_lugar_entry.grid(row=4, column=1, padx=10, pady=5)
-        self.add_button.grid(row=5, column=0, padx=10, pady=5)
-        self.search_button.grid(row=5, column=1, padx=10, pady=5)
-        self.update_button.grid(row=5, column=2, padx=10, pady=5)
-        self.delete_button.grid(row=5, column=3, padx=10, pady=5)
-        self.view_all_button.grid(row=5, column=4, padx=10, pady=5)
+        self.add_button.grid(row=5, column=0, padx=5, pady=5)
+        self.search_button.grid(row=5, column=1, padx=5, pady=5)
+        self.update_button.grid(row=5, column=2, padx=5, pady=5)
+        self.delete_button.grid(row=5, column=3, padx=5, pady=5)
+        self.view_all_button.grid(row=5, column=4, padx=5, pady=5)
+        self.back_button.grid(row=6, column=0, padx=10, pady=5)
         self.image_label.grid(row=0, column=5, rowspan=4, padx=10, pady=5, sticky=tk.NE)
+
+        # Crear la conexión a la base de datos
+        self.database = Database()
+
+
+
+    def go_back_to_reservations(self):
+        self.root.destroy()  # Cierra la ventana actual de Lugares
 
     def add_place(self):
         # Obtener los valores de los campos
@@ -71,7 +81,7 @@ class Lugares:
         # Insertar el lugar en la base de datos
         try:
             cursor = self.database.connection.cursor()
-            query = "INSERT INTO lugares (id, direccion, tipo_lugar) VALUES (%s, %s, %s)"
+            query = "INSERT INTO lugares (id_lugar, direccion, tipo_lugar) VALUES (%s, %s, %s)"
             values = (id_lugar, direccion, tipo_lugar)
             cursor.execute(query, values)
             self.database.connection.commit()
@@ -86,7 +96,7 @@ class Lugares:
         # Buscar el lugar en la base de datos
         try:
             cursor = self.database.connection.cursor()
-            query = "SELECT * FROM lugares WHERE id = %s"
+            query = "SELECT * FROM lugares WHERE id_lugar = %s"
             cursor.execute(query, (id_lugar,))
             lugar = cursor.fetchone()
 
@@ -108,7 +118,7 @@ class Lugares:
         # Actualizar el lugar en la base de datos
         try:
             cursor = self.database.connection.cursor()
-            query = "UPDATE lugares SET direccion = %s, tipo_lugar = %s WHERE id = %s"
+            query = "UPDATE lugares SET direccion = %s, tipo_lugar = %s WHERE id_lugar = %s"
             values = (direccion, tipo_lugar, id_lugar)
             cursor.execute(query, values)
             self.database.connection.commit()
@@ -123,7 +133,7 @@ class Lugares:
         # Eliminar el lugar de la base de datos
         try:
             cursor = self.database.connection.cursor()
-            query = "DELETE FROM lugares WHERE id = %s"
+            query = "DELETE FROM lugares WHERE id_lugar = %s"
             cursor.execute(query, (id_lugar,))
             self.database.connection.commit()
             messagebox.showinfo("Éxito", "Lugar eliminado correctamente")
@@ -160,15 +170,6 @@ class Lugares:
         self.root.mainloop()
 
 
-# Crear la conexión a la base de datos
-database = Database()
-
-# Crear la ventana principal
-root = tk.Tk()
-root.title("Lugares")
 
 
-# Crear el objeto Lugares y ejecutar la aplicación
-lugares_app = Lugares(root, database)
-lugares_app.run()
 

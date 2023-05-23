@@ -5,6 +5,7 @@ import datetime
 import mysql.connector
 from PIL import ImageTk, Image
 import Lugares
+import Usuarios
 
 class Database:
     def __init__(self):
@@ -181,14 +182,24 @@ class EventReservationApp:
         # Conexión a la base de datos
         self.database = Database()
 
-        #ventana lugares
+        #ventanas
+        self.lugares_button = tk.Button(root, text="Gestionar Lugares", command=self.open_new_window)
+        self.lugares_button.grid(row=6, column=0, padx=10, pady=5)
+
+        self.usuarios_button = tk.Button(root, text="Gestionar Usuarios", command=self.open_usuarios_window)
+        self.usuarios_button.grid(row=6, column=1, padx=10, pady=5)
 
     def open_new_window(self):
-        new_window = tk.Toplevel(Lugares)
-        new_window.title("Gestion lugares")
-        lugares_instance = Lugares.Lugares(new_window)  # Crea una instancia de la clase NewTab
-        lugares_instance.run()  # Llama al método run() para mostrar la nueva pestaña
+        new_window = tk.Toplevel(self.root)
+        new_window.title("Gestión de Lugares")
+        lugares_instance = Lugares.Lugares(new_window, self.database) # Crea una instancia de la clase Lugares
+        lugares_instance.run()
 
+    def open_usuarios_window(self):
+        new_window = tk.Toplevel(self.root)
+        new_window.title("Gestión de Usuarios")
+        usuarios_instance = Usuarios.Usuarios(new_window, self.database)  # Crea una instancia de la clase Usuarios
+        usuarios_instance.run()
 
     def add_reservation(self):
         id = self.id_var.get()

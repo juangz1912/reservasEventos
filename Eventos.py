@@ -1,8 +1,109 @@
 import tkinter as tk
 from tkinter import messagebox
-import mysql.connector
 from tkinter import ttk
 import datetime
+import mysql.connector
+
+
+class Database:
+    def __init__(self):
+        self.connection = self.connect_to_database()
+
+    def connect_to_database(self):
+        # Establecer la conexión
+        connection = mysql.connector.connect(
+            host="localhost",  # Cambia esto por la dirección del servidor de la base de datos
+            user="root",  # Cambia esto por tu nombre de usuario de la base de datos
+            password="",  # Cambia esto por tu contraseña de la base de datos
+            database="reservaEventos"  # Cambia esto por el nombre de tu base de datos
+        )
+
+        return connection
+
+    def close_connection(self):
+        self.connection.close()
+
+    def insert_reservation(self, reservation):
+        cursor = self.connection.cursor()
+        query = "INSERT INTO reservas (id, event_name, date, time, attendees) VALUES (%s, %s, %s, %s, %s)"
+        values = (
+            reservation['id'],
+            reservation['event_name'],
+            reservation['date'],
+            reservation['time'],
+            reservation['attendees']
+        )
+
+        try:
+            cursor.execute(query, values)
+            self.connection.commit()
+            messagebox.showinfo("Reserva Agregada", "La reserva ha sido agregada exitosamente.")
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"No se pudo agregar la reserva: {error}")
+        finally:
+            cursor.close()
+
+    def get_reservation_by_event_name(self, event_name):
+        cursor = self.connection.cursor()
+        query = "SELECT * FROM reservas WHERE event_name = %s"
+        values = (event_name,)
+
+        try:
+            cursor.execute(query, values)
+            reservation = cursor.fetchone()
+            if reservation:
+                return {
+                    'id': reservation[0],
+                    'event_name': reservation[1],
+                    'date': reservation[2],
+                    'time': reservation[3],
+                    'attendees': reservation[4]
+                }
+            else:
+                return None
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"No se pudo buscar la reserva: {error}")
+        finally:
+            cursor.close()
+
+    def delete_reservation_by_event_name(self, event_name):
+        cursor = self.connection.cursor()
+        query = "DELETE FROM reservas WHERE event_name = %s"
+        values = (event_name,)
+
+        try:
+            cursor.execute(query, values)
+            self.connection.commit()
+            messagebox.showinfo("Reserva Eliminada", "La reserva ha sido eliminada exitosamente.")
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"No se pudo eliminar la reserva: {error}")
+        finally:
+            cursor.close()
+
+    def get_all_reservations(self):
+        cursor = self.connection.cursor()
+        query = "SELECT * FROM reservas"
+
+        try:
+            cursor.execute(query)
+            reservations = cursor.fetchall()
+            if reservations:
+                return [
+                    {
+                        'id': reservation[0],
+                        'event_name': reservation[1],
+                        'date': reservation[2],
+                        'time': reservation[3],
+                        'attendees': reservation[4]
+                    }
+                    for reservation in reservations
+                ]
+            else:
+                return []
+        except mysql.connector.Error as error:
+            messagebox.showerror("Error", f"No se pudo obtener las reservas: {error}")
+        finally:
+            cursor.close()
 
 
 class EventReservationApp:
@@ -17,11 +118,6 @@ class EventReservationApp:
         self.time_var = tk.StringVar()
         self.attendees_var = tk.StringVar()
 
-        # Estilos
-        self.style = ttk.Style()
-        self.style.configure("TEntry", font=("Arial", 12), background="white", foreground="black")
-        self.style.configure("TButton", font=("Arial", 12), background="black", foreground="black")
-
         # Elementos de la interfaz
         self.id_label = ttk.Label(root, text="ID:")
         self.id_entry = ttk.Entry(root, textvariable=self.id_var)
@@ -33,10 +129,10 @@ class EventReservationApp:
         self.time_entry = ttk.Entry(root, textvariable=self.time_var)
         self.attendees_label = ttk.Label(root, text="Asistentes:")
         self.attendees_entry = ttk.Entry(root, textvariable=self.attendees_var)
-        self.add_button = ttk.Button(root, text="Agregar", command=self.add_reservation)
-        self.search_button = ttk.Button(root, text="Buscar", command=self.search_reservation)
-        self.delete_button = ttk.Button(root, text="Eliminar", command=self.delete_reservation)
-        self.view_all_button = ttk.Button(root, text="Ver todas", command=self.view_all_reservations)
+        self.add_button = tk.Button(root, text="Agregar", command=self.add_reservation)
+        self.search_button = tk.Button(root, text="Buscar", command=self.search_reservation)
+        self.delete_button = tk.Button(root, text="Eliminar", command=self.delete_reservation)
+        self.view_all_button = tk.Button(root, text="Ver todos", command=self.view_all_reservations)
 
         # Posicionamiento de los elementos
         self.id_label.grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
@@ -54,31 +150,8 @@ class EventReservationApp:
         self.delete_button.grid(row=5, column=2, padx=10, pady=5)
         self.view_all_button.grid(row=5, column=3, padx=10, pady=5)
 
-        # Configurar diseño responsivo
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_rowconfigure(1, weight=1)
-        self.root.grid_rowconfigure(2, weight=1)
-        self.root.grid_rowconfigure(3, weight=1)
-        self.root.grid_rowconfigure(4, weight=1)
-        self.root.grid_rowconfigure(5, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_columnconfigure(1, weight=1)
-        self.root.grid_columnconfigure(2, weight=1)
-        self.root.grid_columnconfigure(3, weight=1)
-
         # Conexión a la base de datos
-        self.connection = self.connect_to_database()
-
-    def connect_to_database(self):
-        # Establecer la conexión
-        connection = mysql.connector.connect(
-            host="localhost",  # Cambia esto por la dirección del servidor de la base de datos
-            user="root",  # Cambia esto por tu nombre de usuario de la base de datos
-            password="",  # Cambia esto por tu contraseña de la base de datos
-            database="reservaEventos"  # Cambia esto por el nombre de tu base de datos
-        )
-
-        return connection
+        self.database = Database()
 
     def add_reservation(self):
         id = self.id_var.get()
@@ -87,131 +160,84 @@ class EventReservationApp:
         time_str = self.time_var.get()
         attendees = self.attendees_var.get()
 
-        # Validar que todos los campos estén completos
         if id and event_name and date_str and time_str and attendees:
             try:
-                # Convertir la fecha al formato de número entero
                 date_obj = datetime.datetime.strptime(date_str, "%d/%m/%Y")
                 date_int = date_obj.strftime("%Y%m%d")
 
-                # Convertir la hora al formato de número entero
                 time_obj = datetime.datetime.strptime(time_str, "%H:%M")
                 time_int = time_obj.strftime("%H%M")
 
-                cursor = self.connection.cursor()
+                reservation = {
+                    'id': id,
+                    'event_name': event_name,
+                    'date': date_int,
+                    'time': time_int,
+                    'attendees': attendees
+                }
 
-                # Verificar si ya existe un evento con el mismo ID
-                query = "SELECT * FROM reservas WHERE id = %s"
-                values = (id,)
-                cursor.execute(query, values)
-                existing_event = cursor.fetchone()
+                self.database.insert_reservation(reservation)
 
-                if existing_event:
-                    messagebox.showerror("Error", "Ya existe un evento con el mismo ID.")
-                else:
-                    # Verificar si ya existe un evento con el mismo nombre
-                    query = "SELECT * FROM reservas WHERE event_name = %s"
-                    values = (event_name,)
-                    cursor.execute(query, values)
-                    existing_event = cursor.fetchone()
-
-                    if existing_event:
-                        messagebox.showerror("Error", "Ya existe un evento con el mismo nombre.")
-                    else:
-                        # Ejemplo de consulta INSERT
-                        query = "INSERT INTO reservas (id, event_name, date, time, attendees) VALUES (%s, %s, %s, %s, %s)"
-                        values = (id, event_name, date_int, time_int, attendees)
-                        cursor.execute(query, values)
-
-                        self.connection.commit()
-                        cursor.close()
-
-                        messagebox.showinfo("Reserva Agregada", "La reserva ha sido agregada exitosamente.")
-
-                        # Limpiar los campos después de agregar
-                        self.id_var.set("")
-                        self.event_name_var.set("")
-                        self.date_var.set("")
-                        self.time_var.set("")
-                        self.attendees_var.set("")
+                self.clear_entries()
             except ValueError:
-                messagebox.showerror("Error", "Por favor, introduce valores válidos en los campos de fecha (dd/mm/aaaa) y hora (hh:mm).")
+                messagebox.showerror("Error", "Fecha u hora inválida. Utiliza el formato correcto.")
         else:
-            messagebox.showerror("Error", "Por favor, completa todos los campos antes de agregar una reserva.")
+            messagebox.showwarning("Advertencia", "Por favor completa todos los campos.")
 
     def search_reservation(self):
         event_name = self.event_name_var.get()
 
-        cursor = self.connection.cursor()
+        if event_name:
+            reservation = self.database.get_reservation_by_event_name(event_name)
 
-        # Ejemplo de consulta SELECT
-        query = "SELECT * FROM reservas WHERE event_name = %s"
-        values = (event_name,)
-        cursor.execute(query, values)
-        reservation = cursor.fetchone()
-
-        if reservation:
-            self.id_var.set(reservation[0])
-            self.date_var.set(reservation[2])
-            self.time_var.set(reservation[3])
-            self.attendees_var.set(reservation[4])
+            if reservation:
+                messagebox.showinfo("Reserva encontrada", f"ID: {reservation['id']}\n"
+                                                           f"Nombre del evento: {reservation['event_name']}\n"
+                                                           f"Fecha: {reservation['date']}\n"
+                                                           f"Hora: {reservation['time']}\n"
+                                                           f"Asistentes: {reservation['attendees']}")
+            else:
+                messagebox.showinfo("Reserva no encontrada", "No se encontró ninguna reserva con ese nombre de evento.")
         else:
-            messagebox.showerror("Error", "No se encontró ninguna reserva con el nombre de evento especificado.")
-
-        cursor.close()
+            messagebox.showwarning("Advertencia", "Por favor ingresa el nombre del evento a buscar.")
 
     def delete_reservation(self):
         event_name = self.event_name_var.get()
 
-        cursor = self.connection.cursor()
+        if event_name:
+            confirmation = messagebox.askyesno("Confirmación", "¿Estás seguro/a de que deseas eliminar la reserva?")
 
-        # Ejemplo de consulta DELETE
-        query = "DELETE FROM reservas WHERE event_name = %s"
-        values = (event_name,)
-        cursor.execute(query, values)
+            if confirmation:
+                self.database.delete_reservation_by_event_name(event_name)
+                self.clear_entries()
+        else:
+            messagebox.showwarning("Advertencia", "Por favor ingresa el nombre del evento a eliminar.")
 
-        self.connection.commit()
-        cursor.close()
+    def view_all_reservations(self):
+        reservations = self.database.get_all_reservations()
 
-        messagebox.showinfo("Reserva Eliminada", "La reserva ha sido eliminada exitosamente.")
+        if reservations:
+            messagebox.showinfo("Todas las reservas", "\n".join(
+                f"ID: {reservation['id']}, Nombre del evento: {reservation['event_name']}, "
+                f"Fecha: {reservation['date']}, Hora: {reservation['time']}, Asistentes: {reservation['attendees']}"
+                for reservation in reservations
+            ))
+        else:
+            messagebox.showinfo("Todas las reservas", "No se encontraron reservas.")
 
-        # Limpiar los campos después de eliminar
+    def clear_entries(self):
         self.id_var.set("")
         self.event_name_var.set("")
         self.date_var.set("")
         self.time_var.set("")
         self.attendees_var.set("")
 
-    def view_all_reservations(self):
-        cursor = self.connection.cursor()
 
-        # Ejemplo de consulta SELECT para obtener todas las reservas
-        query = "SELECT * FROM reservas"
-        cursor.execute(query)
-        reservations = cursor.fetchall()
-
-        if reservations:
-            # Mostrar las reservas en una ventana emergente (messagebox)
-            reservation_list = ""
-            for reservation in reservations:
-                reservation_list += f"ID: {reservation[0]}, Nombre del evento: {reservation[1]}, Fecha: {reservation[2]}, Hora: {reservation[3]}, Asistentes: {reservation[4]}\n"
-
-            messagebox.showinfo("Todas las Reservas", reservation_list)
-        else:
-            messagebox.showinfo("Todas las Reservas", "No se encontraron reservas.")
-
-        cursor.close()
-
-    def close_connection(self):
-        # Cerrar la conexión cuando se cierre la ventana
-        self.connection.close()
+root = tk.Tk()
+app = EventReservationApp(root)
+root.mainloop()
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = EventReservationApp(root)
-    root.protocol("WM_DELETE_WINDOW", app.close_connection)
-    root.mainloop()
 
 
 

@@ -6,6 +6,7 @@ import mysql.connector
 from PIL import ImageTk, Image
 import Lugares
 import Usuarios
+import Reservas
 
 class Database:
     def __init__(self):
@@ -27,7 +28,7 @@ class Database:
 
     def insert_reservation(self, reservation):
         cursor = self.connection.cursor()
-        query = "INSERT INTO reservas (id, event_name, date, time, attendees) VALUES (%s, %s, %s, %s, %s)"
+        query = "INSERT INTO eventos (id, event_name, date, time, attendees) VALUES (%s, %s, %s, %s, %s)"
         values = (
             reservation['id'],
             reservation['event_name'],
@@ -47,7 +48,7 @@ class Database:
 
     def get_reservation_by_id(self, id):
         cursor = self.connection.cursor()
-        query = "SELECT * FROM reservas WHERE id = %s"
+        query = "SELECT * FROM eventos WHERE id = %s"
         values = (id,)
 
         try:
@@ -70,7 +71,7 @@ class Database:
 
     def delete_reservation_by_id(self, id):
         cursor = self.connection.cursor()
-        query = "DELETE FROM reservas WHERE id = %s"
+        query = "DELETE FROM eventos WHERE id = %s"
         values = (id,)
 
         try:
@@ -84,7 +85,7 @@ class Database:
 
     def update_reservation(self, reservation):
         cursor = self.connection.cursor()
-        query = "UPDATE reservas SET id = %s, event_name = %s, date = %s, time = %s, attendees = %s WHERE event_name = %s"
+        query = "UPDATE eventos SET id = %s, event_name = %s, date = %s, time = %s, attendees = %s WHERE event_name = %s"
         values = (
             reservation['id'],
             reservation['event_name'],
@@ -105,7 +106,7 @@ class Database:
 
     def get_all_reservations(self):
         cursor = self.connection.cursor()
-        query = "SELECT * FROM reservas"
+        query = "SELECT * FROM eventos"
 
         try:
             cursor.execute(query)
@@ -189,6 +190,9 @@ class EventReservationApp:
         self.usuarios_button = tk.Button(root, text="Gestionar Usuarios", command=self.open_usuarios_window)
         self.usuarios_button.grid(row=6, column=1, padx=10, pady=5)
 
+        self.reservas_button = tk.Button(root, text="Gestionar Reservas", command=self.open_reservas_window)
+        self.reservas_button.grid(row=6, column=2, padx=10, pady=5)
+
     def open_new_window(self):
         new_window = tk.Toplevel(self.root)
         new_window.title("Gestión de Lugares")
@@ -200,6 +204,12 @@ class EventReservationApp:
         new_window.title("Gestión de Usuarios")
         usuarios_instance = Usuarios.Usuarios(new_window, self.database)  # Crea una instancia de la clase Usuarios
         usuarios_instance.run()
+
+    def open_reservas_window(self):
+        new_window = tk.Toplevel(self.root)
+        new_window.title("Gestión de Reservas")
+        reservas_instance = Reservas.Reservas(new_window, self.database)  # Crea una instancia de la clase Reservas
+        reservas_instance.run()
 
     def add_reservation(self):
         id = self.id_var.get()
@@ -245,9 +255,9 @@ class EventReservationApp:
                 self.time_var.set(reservation['time'])
                 self.attendees_var.set(reservation['attendees'])
 
-                messagebox.showinfo("Reserva encontrada", f"Se encontró la reserva con el ID: {reservation['id']}")
+                messagebox.showinfo("Evento encontrado", f"Se encontró la reserva con el ID: {reservation['id']}")
             else:
-                messagebox.showinfo("Reserva no encontrada", "No se encontró ninguna reserva con ese ID.")
+                messagebox.showinfo("Evento no encontrado", "No se encontró ninguna reserva con ese ID.")
         else:
             messagebox.showwarning("Advertencia", "Por favor ingresa el ID de la reserva a buscar.")
 
@@ -297,10 +307,10 @@ class EventReservationApp:
         reservations = self.database.get_all_reservations()
 
         if reservations:
-            messagebox.showinfo("Todas las reservas", "\n".join([f"ID: {reservation['id']}, Nombre del evento: {reservation['event_name']}"
+            messagebox.showinfo("Todos los eventos", "\n".join([f"ID: {reservation['id']}, Nombre del evento: {reservation['event_name']}"
                                                                  for reservation in reservations]))
         else:
-            messagebox.showinfo("Todas las reservas", "No se encontraron reservas.")
+            messagebox.showinfo("Todos los eventos", "No se encontraron reservas.")
 
     def clear_entries(self):
         self.id_var.set("")

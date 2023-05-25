@@ -98,7 +98,7 @@ class Reservas:
 
             messagebox.showinfo("Creación Exitosa", "La reserva se ha creado correctamente")
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo crear la reserva: {str(e)}")
+            messagebox.showerror("Error", f"No se pudo crear la reserva: recuerda poner solo id de las otras tablas")
 
     def read_reservation(self):
         # Obtener el ID de la reserva

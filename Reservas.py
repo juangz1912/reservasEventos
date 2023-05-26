@@ -37,8 +37,8 @@ class Reservas:
         self.id_usuario_entry = ttk.Entry(root, textvariable=self.id_usuario_var)
         self.id_evento_label = tk.Label(root, text="ID Evento:")
         self.id_evento_entry = ttk.Entry(root, textvariable=self.id_evento_var)
-        self.count_users_button = tk.Button(root, text="Contar Usuarios", command=self.count_users)
-        self.count_reservations_button = tk.Button(root, text="Contar Reservas", command=self.count_reservations)
+        self.count_users_button = tk.Button(root, text="Contar Usuarios", command=self.usuarios_evento)
+        self.count_reservations_button = tk.Button(root, text="Contar Reservas", command=self.reservas_usuario)
         self.create_button = tk.Button(root, text="Crear Reserva", command=self.create_reservation)
         self.read_button = tk.Button(root, text="Leer Reserva", command=self.read_reservation)
         self.update_button = tk.Button(root, text="Actualizar Reserva", command=self.update_reservation)
@@ -65,23 +65,72 @@ class Reservas:
         self.read_button.grid(row=5, column=1, padx=10, pady=5)
         self.update_button.grid(row=6, column=0, padx=10, pady=5)
         self.delete_button.grid(row=6, column=1, padx=10, pady=5)
+        self.image_label.grid(row=0, column=5, rowspan=4, padx=10, pady=5, sticky=tk.NE)
 
         # Crear la conexión a la base de datos
         self.database = database
 
-    def count_users(self):
-        # Obtener el ID de la reserva
-        id_reserva = self.id_reserva_var.get()
-
-        # Contar los usuarios en la reserva
-
-
-    def count_reservations(self):
+    def reservas_usuario(self):
         # Obtener el ID del usuario
         id_usuario = self.id_usuario_var.get()
 
-        # Contar las reservas del usuario
+        try:
+            cursor = self.database.connection.cursor()
+            query = """
+                SELECT u.nombre AS "Nombre Usuario", e.event_name AS "Evento", e.date AS "Fecha"
+                FROM usuarios u
+                INNER JOIN reservas r ON u.id_usuario = r.id_usuario 
+                INNER JOIN eventos e ON r.id_evento = e.id
+                WHERE u.id_usuario = %s
+            """
+            cursor.execute(query, (id_usuario,))
+            reservations = cursor.fetchall()
 
+            if len(reservations) > 0:
+                message = "Detalles de las reservas:\n"
+                for reservation in reservations:
+                    nombre_usuario, evento, fecha = reservation
+                    message += f"Nombre Usuario: {nombre_usuario}\n"
+                    message += f"Evento: {evento}\n"
+                    message += f"Fecha: {fecha}\n"
+                    message += "\n"
+
+                messagebox.showinfo("Reservas del Usuario", message)
+            else:
+                messagebox.showinfo("Usuario no encontrado", f"No se encontró el usuario con ID {id_usuario}")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo obtener las reservas: {str(e)}")
+
+    def usuarios_evento(self):
+        # Obtener el ID del evento
+        id_evento = self.id_evento_var.get()
+
+        try:
+            cursor = self.database.connection.cursor()
+            query = """
+                SELECT e.event_name AS "Evento", u.nombre AS "Nombre Usuario", e.date AS "Fecha"
+                FROM usuarios u
+                INNER JOIN reservas r ON u.id_usuario = r.id_usuario 
+                INNER JOIN eventos e ON r.id_evento = e.id
+                WHERE e.id = %s
+            """
+            cursor.execute(query, (id_evento,))
+            users = cursor.fetchall()
+
+            if len(users) > 0:
+                message = "Detalles de los usuarios:\n"
+                for user in users:
+                    evento, nombre_usuario, fecha = user
+                    message += f"Evento: {evento}\n"
+                    message += f"Nombre Usuario: {nombre_usuario}\n"
+                    message += f"Fecha: {fecha}\n"
+                    message += "\n"
+
+                messagebox.showinfo("Usuarios del Evento", message)
+            else:
+                messagebox.showinfo("Evento no encontrado", f"No se encontró el evento con ID {id_evento}")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo obtener los usuarios: {str(e)}")
 
     def create_reservation(self):
         # Obtener los datos de la reserva
